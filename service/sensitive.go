@@ -97,9 +97,6 @@ func SensitiveReplace(runes []rune) string {
 				wordTemp += char
 				if fmt.Sprintf("%T", dictionary[char]) == "string" {
 					wordTemp = "**"
-					if step == len(runes) {
-						temp += wordTemp
-					}
 				} else {
 					find(dictionary[char].(map[string]interface{}), level+1)
 				}
@@ -118,6 +115,9 @@ func SensitiveReplace(runes []rune) string {
 					return
 				}
 			}
+		}
+		if len(runes) == step && wordTemp != "" && level == 0 {
+			temp += wordTemp
 		}
 	}
 	find(dic, 0)
