@@ -17,18 +17,21 @@ func (c *MainController) Sensitive() {
 	begin := time.Now()
 	var words []string
 	var resultContent string
-	cnum := make(chan int, 2)
+	ch := make(chan interface{}, 2)
 	go func() {
-		words = service.SensitiveFind([]rune(content))
-		cnum <- 1
+		ch <- service.SensitiveFind([]rune(content))
 	}()
 	go func() {
-		resultContent = service.SensitiveReplace([]rune(content))
-		cnum <- 2
+		ch <- service.SensitiveReplace([]rune(content))
 	}()
-	<-cnum
-	<-cnum
-	fmt.Println("WE DONE!!!")
+	for i := 0; i < 2; i++ {
+		result := <-ch
+		if fmt.Sprintf("%T", result) == "[]string" {
+			words = result.([]string)
+		} else {
+			resultContent = result.(string)
+		}
+	}
 	since := time.Since(begin).Nanoseconds() //统计查找敏感词和替换敏感词所用的时间
 	result := &struct {
 		Words   map[string]int `json:"words"`
