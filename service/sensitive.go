@@ -2,7 +2,6 @@ package service
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/astaxie/beego"
 	"io"
 	"os"
@@ -39,7 +38,7 @@ func addWord(word string) {
 		}
 		char := string(r)
 		nChar := string(runes[i+1])
-		if tempMap[char] != nil && fmt.Sprintf("%T", tempMap[char]) != "string" {
+		if _, ok := tempMap[char].(string); tempMap[char] != nil && !ok {
 			tempMap = tempMap[char].(map[string]interface{})
 			if tempMap[nChar] == nil {
 				tempMap[nChar] = "END"
@@ -63,9 +62,9 @@ func SensitiveFind(runes []rune) []string {
 			char := string(runes[step])
 			step++
 			if dictionary[char] != nil {
-				if fmt.Sprintf("%T", dictionary[char]) == "string" {
-					result = append(result, key+char)
-					return result
+				switch dictionary[char].(type) {
+				case string:
+					return append(result, key+char)
 				}
 				result = find(dictionary[char].(map[string]interface{}), key+char, result, level+1)
 				if level != 0 {
@@ -95,9 +94,10 @@ func SensitiveReplace(runes []rune) string {
 			step++
 			if dictionary[char] != nil {
 				wordTemp += char
-				if fmt.Sprintf("%T", dictionary[char]) == "string" {
+				switch dictionary[char].(type) {
+				case string:
 					wordTemp = "**"
-				} else {
+				case map[string]interface{}:
 					find(dictionary[char].(map[string]interface{}), level+1)
 				}
 				if level != 0 {
@@ -125,7 +125,6 @@ func SensitiveReplace(runes []rune) string {
 }
 
 func DoCheck(content string) (words []string, resultContent string) {
-	var ok bool
 	ch := make(chan interface{}, 2)
 	// 开启多线程
 	go func() {
@@ -136,11 +135,11 @@ func DoCheck(content string) (words []string, resultContent string) {
 	}()
 	// 从channel中读取数据
 	msg := <-ch
-	if words, ok = msg.([]string); ok {
-		resultContent = (<-ch).(string)
-	} else {
-		resultContent = (msg).(string)
-		words = (<-ch).([]string)
+	switch msg.(type) {
+	case string:
+		resultContent, words = (msg).(string), (<-ch).([]string)
+	case []string:
+		resultContent, words = (<-ch).(string), (msg).([]string)
 	}
 	return
 }
