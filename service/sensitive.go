@@ -123,3 +123,24 @@ func SensitiveReplace(runes []rune) string {
 	find(dic, 0)
 	return temp
 }
+
+func DoCheck(content string) (words []string, resultContent string) {
+	var ok bool
+	ch := make(chan interface{}, 2)
+	// 开启多线程
+	go func() {
+		ch <- SensitiveFind([]rune(content))
+	}()
+	go func() {
+		ch <- SensitiveReplace([]rune(content))
+	}()
+	// 从channel中读取数据
+	msg := <-ch
+	if words, ok = msg.([]string); ok {
+		resultContent = (<-ch).(string)
+	} else {
+		resultContent = (msg).(string)
+		words = (<-ch).([]string)
+	}
+	return
+}
