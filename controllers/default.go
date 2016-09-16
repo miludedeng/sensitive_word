@@ -15,8 +15,20 @@ type MainController struct {
 func (c *MainController) Sensitive() {
 	content := c.GetString("content")
 	begin := time.Now()
-	words := service.SensitiveFind([]rune(content))
-	resultContent := service.SensitiveReplace([]rune(content))
+	var words []string
+	var resultContent string
+	cnum := make(chan int, 2)
+	go func() {
+		words = service.SensitiveFind([]rune(content))
+		cnum <- 1
+	}()
+	go func() {
+		resultContent = service.SensitiveReplace([]rune(content))
+		cnum <- 2
+	}()
+	<-cnum
+	<-cnum
+	fmt.Println("WE DONE!!!")
 	since := time.Since(begin).Nanoseconds() //统计查找敏感词和替换敏感词所用的时间
 	result := &struct {
 		Words   map[string]int `json:"words"`
