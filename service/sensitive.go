@@ -2,9 +2,10 @@ package service
 
 import (
 	"bufio"
-	"github.com/astaxie/beego"
 	"io"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -12,7 +13,13 @@ var dic map[string]interface{} = make(map[string]interface{})
 
 //初始化词典
 func init() {
-	f, err := os.Open(beego.AppPath + "/dic.txt")
+	dicPath, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+	if strings.HasSuffix(dicPath, "_test") {
+		_, dicPath, _, _ = runtime.Caller(0)
+		dicPath, _ = filepath.Abs(filepath.Dir(dicPath) + "/../")
+	}
+	println(dicPath)
+	f, err := os.Open(dicPath + "/dic.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -43,7 +50,6 @@ func addWord(word string) {
 			if tempMap[nChar] == nil {
 				tempMap[nChar] = "END"
 			}
-
 		} else {
 			tempMap2 := make(map[string]interface{})
 			tempMap2[nChar] = "END"
