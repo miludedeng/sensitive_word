@@ -36,8 +36,6 @@ func init() {
 	fmt.Println(dic)
 }
 
-// +  对每个检测字符增加标记来检测字符是否是该字符串最后一个字符
-
 //添加敏感词到内存
 func addWord(word string) {
 	tempMap := dic
@@ -58,7 +56,6 @@ func addWord(word string) {
 	}
 }
 
-// + 通过检测标记来查询字符串标记。
 func SensitiveFind(runes []rune) []string {
 	step := 0
 	flag := true
@@ -85,14 +82,49 @@ func SensitiveFind(runes []rune) []string {
 					return result
 				}
 			}
+			flag = true
 		}
-		flag = true
 		return result
 	}
 	resultString := find(dic, "", nil, 0)
-	fmt.Println(resultString)
+	//	fmt.Println(resultString)
 	return resultString
 }
+
+//func SensitiveFind(runes []rune) []string {
+//	keywords := []string{}
+//	for i := 0; i < len(runes); i++ {
+//		nowMap := dic
+//		length := 0
+//		flaglength := 0
+//		flag := false
+//		for j := i; j < len(runes);j++ {
+//			word := string(runes[j : j+1])
+//			nowMap, _ = nowMap[word].(map[string]interface{})
+//			if nowMap != nil {
+//				length = length + 1
+//				tag, _ := nowMap["ISEND"].(string)
+//				if "END" == tag {
+//					flag = true
+//					flaglength = length
+//				}
+//			} else {
+//				break
+//			}
+//		}
+//
+//		if length < 2 || !flag {
+//			length = 0
+//		}
+//		if length > 0 {
+//			keywords = append(keywords, string(runes[i:i+flaglength]))
+//			i = i + flaglength - 1
+//		}
+//	}
+//	fmt.Println(keywords)
+//	return keywords
+//
+//}
 
 //敏感词替换
 func SensitiveReplace(runes []rune) string {
