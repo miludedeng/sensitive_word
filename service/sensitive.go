@@ -2,6 +2,7 @@ package service
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -18,7 +19,7 @@ func init() {
 		_, dicPath, _, _ = runtime.Caller(0)
 		dicPath, _ = filepath.Abs(filepath.Dir(dicPath) + "/../")
 	}
-	println(dicPath)
+	//	println(dicPath)
 	f, err := os.Open(dicPath + "/dic.txt")
 	if err != nil {
 		panic(err)
@@ -32,48 +33,50 @@ func init() {
 		}
 		addWord(strings.Replace(line, "\n", "", -1)) //文件的没一行有\n结尾，需要剔除
 	}
-
+	fmt.Println(dic)
 }
+
+// +  对每个检测字符增加标记来检测字符是否是该字符串最后一个字符
 
 //添加敏感词到内存
 func addWord(word string) {
 	tempMap := dic
 	runes := []rune(word)
 	for i, r := range runes {
-		if len(runes) <= i+1 {
-			break
-		}
 		char := string(r)
-		nChar := string(runes[i+1])
 		if _, ok := tempMap[char].(string); tempMap[char] != nil && !ok {
 			tempMap = tempMap[char].(map[string]interface{})
-			if tempMap[nChar] == nil {
-				tempMap[nChar] = "END"
-			}
 		} else {
 			tempMap2 := make(map[string]interface{})
-			tempMap2[nChar] = "END"
+			tempMap2["ISEND"] = "NOEND"
 			tempMap[char] = tempMap2
 			tempMap = tempMap2
+		}
+		if len(runes) <= i+1 {
+			tempMap["ISEND"] = "END"
 		}
 	}
 }
 
-//敏感词查询
+// + 通过检测标记来查询字符串标记。
 func SensitiveFind(runes []rune) []string {
 	step := 0
+	flag := true
 	var find func(dictionary map[string]interface{}, key string, result []string, level int) []string
 	find = func(dictionary map[string]interface{}, key string, result []string, level int) []string {
 		for step < len(runes) {
 			char := string(runes[step])
 			step++
 			if dictionary[char] != nil {
-				switch dictionary[char].(type) {
-				case string:
-					return append(result, key+char)
-				}
-				result = find(dictionary[char].(map[string]interface{}), key+char, result, level+1)
+				tempM := dictionary[char].(map[string]interface{})
+				result = find(tempM, key+char, result, level+1)
 				if level != 0 {
+					if tempM["ISEND"] == "END" {
+						if flag {
+							flag = false
+							result = append(result, key+char)
+						}
+					}
 					return result
 				}
 			} else {
@@ -83,9 +86,12 @@ func SensitiveFind(runes []rune) []string {
 				}
 			}
 		}
+		flag = true
 		return result
 	}
-	return find(dic, "", nil, 0)
+	resultString := find(dic, "", nil, 0)
+	fmt.Println(resultString)
+	return resultString
 }
 
 //敏感词替换
